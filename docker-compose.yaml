@@ -1,0 +1,15 @@
+version: '3.1'
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: agile-agent-db
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: wewqieopuwqioeqwhjksdfhjkdfhwadasjkdhajkeywe
+      MARIADB_DATABASE: agiledatabase
+      MARIADB_USER: agileagent
+      MARIADB_PASSWORD: agileagent@631
+    volumes:
+      - ./mariadb-data:/var/lib/mysql # Persist data outside the container
+    ports:
+      - "3306:3306" # Map host port 3306 to container port 3306

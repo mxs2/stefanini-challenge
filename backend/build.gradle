@@ -1,0 +1,90 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.stefanini'
+version = '0.0.1-SNAPSHOT'
+description = 'agile_agent'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    set('springCloudVersion', "2025.1.0")
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'dev.langchain4j:langchain4j-open-ai-spring-boot-starter:0.35.0'
+    implementation 'dev.langchain4j:langchain4j-spring-boot-starter:0.35.0'
+    implementation 'org.apache.tika:tika-core:3.2.2'
+    implementation 'org.apache.tika:tika-parser-pdf-module:3.2.2'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+    implementation 'io.github.openfeign:feign-jackson:13.6'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    annotationProcessor 'org.projectlombok:lombok'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+    testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+tasks.register('generateRsaKeys') {
+    def privateKey = file("src/main/resources/keys/app.key")
+    def publicKey = file("src/main/resources/keys/app.pub")
+
+    outputs.file(privateKey)
+    outputs.file(publicKey)
+
+    doLast {
+        if (!privateKey.parentFile.exists()) {
+            privateKey.parentFile.mkdirs()
+        }
+        if (!privateKey.exists()) {
+            exec {
+                commandLine "openssl", "genrsa", "-out", privateKey, "2048"
+            }
+        }
+        if (!publicKey.exists()) {
+            exec {
+                commandLine "openssl", "rsa", "-in", privateKey, "-pubout", "-out", publicKey
+            }
+        }
+    }
+}
+
+tasks.named('processResources') {
+    dependsOn(tasks.named('generateRsaKeys'))
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
