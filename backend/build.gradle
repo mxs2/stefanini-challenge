@@ -57,6 +57,34 @@ dependencyManagement {
     }
 }
 
+tasks.register('generateRsaKeys') {
+    def privateKey = file("src/main/resources/keys/app.key")
+    def publicKey = file("src/main/resources/keys/app.pub")
+
+    outputs.file(privateKey)
+    outputs.file(publicKey)
+
+    doLast {
+        if (!privateKey.parentFile.exists()) {
+            privateKey.parentFile.mkdirs()
+        }
+        if (!privateKey.exists()) {
+            exec {
+                commandLine "openssl", "genrsa", "-out", privateKey, "2048"
+            }
+        }
+        if (!publicKey.exists()) {
+            exec {
+                commandLine "openssl", "rsa", "-in", privateKey, "-pubout", "-out", publicKey
+            }
+        }
+    }
+}
+
+tasks.named('processResources') {
+    dependsOn(tasks.named('generateRsaKeys'))
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }
